@@ -1,0 +1,294 @@
+openapi: 3.0.3
+info:
+  title: STD23099 - TD_Final
+  version: 1.0.3
+
+servers:
+  - url: https://localhost.std23099.com
+
+paths:
+  /competitions:
+    get:
+      tags:
+        - Get competitions list
+      summary: Get a list of competitions
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Competition'
+    post:
+      summary: Create a new competition
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Competition'
+      responses:
+        '201':
+          description: Competition created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Competition'
+
+
+  /teams:
+    get:
+      summary: Get a list of teams
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: teamName
+          in: query
+          description: Filter teams by name
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Team'
+    post:
+      summary: Create a new team
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                slogan:
+                  type: string
+              required:
+                - name
+                - slogan
+      responses:
+        '201':
+          description: Team created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+
+
+  /teams/{teamId}/players:
+    get:
+      summary: Get a list of players for a specific team
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: playerName
+          in: query
+          description: Filter players by name
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Player'
+    post:
+      summary: Create a new player for a specific team
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Player'
+      responses:
+        '201':
+          description: Player created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Player'
+
+
+  /teams/{teamId}/competitions:
+    post:
+      summary: Associate a team with competitions
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                competitionIds:
+                  type: array
+                  items:
+                    type: integer
+              required:
+                - competitionIds
+      responses:
+        '200':
+          description: Team associated with competitions successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+
+  /teams/{teamId}/players/transfer:
+    post:
+      summary: Transfer players to a team
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                playerIds:
+                  type: array
+                  items:
+                    type: integer
+              required:
+                - playerIds
+      responses:
+        '200':
+          description: Players transferred to team successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+
+
+components:
+  schemas:
+    Competition:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        location:
+          type: string
+      required:
+        - name
+        - location
+
+    Team:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slogan:
+          type: string
+        competitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Competition'
+        players:
+          type: array
+          items:
+            $ref: '#/components/schemas/Player'
+      required:
+        - name
+        - slogan
+
+    Player:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        number:
+          type: integer
+        strongFoot:
+          type: string
+          enum: [Left, Right]
+      required:
+        - name
+        - number
+        - strongFoot
+
+    PaginatedResponse:
+      type: object
+      properties:
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalItems:
+          type: integer
+        items:
+          type: array
+          items: {}
+
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    PageSizeParam:
+      name: pageSize
+      in: query
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
